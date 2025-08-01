@@ -62,32 +62,22 @@ const Packages = () => {
     }
 
     try {
-      // Generate order reference
-      const orderReference = `ORDER-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
-      const selectedPackage = packages.find(p => p.id === packageId);
-      if (!selectedPackage) return;
-
-      const { data, error } = await supabase
-        .from('orders')
-        .insert({
-          package_id: packageId,
-          order_reference: orderReference,
-          customer_email: user.email,
-          total_amount: selectedPackage.price_usd,
-          user_id: user.id
-        })
-        .select()
-        .single();
+      const { data, error } = await supabase.functions.invoke('create-esim-order', {
+        body: {
+          packageId: packageId,
+          customerEmail: user.email,
+          customerPhone: null
+        }
+      });
 
       if (error) throw error;
 
       toast({
         title: "Order Created",
-        description: `Order ${orderReference} has been created successfully!`,
+        description: `Order ${data.order.orderReference} has been created successfully!`,
       });
 
-      navigate(`/orders/${data.id}`);
+      navigate(`/orders/${data.order.id}`);
     } catch (error) {
       console.error('Error creating order:', error);
       toast({
