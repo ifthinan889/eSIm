@@ -128,7 +128,7 @@ serve(async (req) => {
         .eq(identifier, value);
     }
 
-    // For top-up, we might want to create a top-up record
+    // For top-up, create a new order record
     if (action === 'topup' && data.success) {
       const supabaseService = createClient(
         Deno.env.get("SUPABASE_URL") ?? "",
@@ -136,14 +136,19 @@ serve(async (req) => {
         { auth: { persistSession: false } }
       );
 
-      // Find the eSIM by ICCID
+      // Find the original eSIM and its order by ICCID
       const { data: esim } = await supabaseService
         .from('esims')
-        .select('id')
+        .select(`
+          order_id,
+          orders (id, user_id, customer_email, payment_id)
+        `)
         .eq('iccid', iccid)
         .single();
 
-      if (esim) {
+      if (esim?.orders && packageCode) {
+        const originalOrder = esim.orders;
+        
         // Find the package
         const { data: pkg } = await supabaseService
           .from('esim_packages')
@@ -152,13 +157,21 @@ serve(async (req) => {
           .single();
 
         if (pkg) {
+          // Create topup order
+          const topupReference = `TOPUP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          
           await supabaseService
-            .from('topups')
+            .from('orders')
             .insert({
-              esim_id: esim.id,
+              user_id: originalOrder.user_id,
               package_id: pkg.id,
-              amount: pkg.price_usd,
-              status: 'completed'
+              order_reference: topupReference,
+              customer_email: originalOrder.customer_email,
+              status: 'completed',
+              total_amount: pkg.price_usd,
+              payment_id: `TOPUP-${Date.now()}`,
+              order_type: 'TOPUP',
+              parent_order_id: originalOrder.id
             });
         }
       }

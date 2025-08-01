@@ -32,13 +32,43 @@ const Admin = () => {
   });
   const [packages, setPackages] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [settings, setSettings] = useState({
+    exchangeRate: 17000,
+    markupTiers: {
+      tier1: { min_price: 0, max_price: 50, markup_percentage: 20 },
+      tier2: { min_price: 50, max_price: 100, markup_percentage: 15 },
+      tier3: { min_price: 100, max_price: 999999, markup_percentage: 10 }
+    }
+  });
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
     loadDashboardData();
+    loadSettings();
   }, []);
+
+  const loadSettings = async () => {
+    try {
+      const { data } = await supabase
+        .from('app_settings')
+        .select('key, value')
+        .in('key', ['exchange_rate_usd_to_idr', 'markup_tiers']);
+
+      if (data) {
+        const exchangeRateData = data.find(s => s.key === 'exchange_rate_usd_to_idr');
+        const markupTiersData = data.find(s => s.key === 'markup_tiers');
+
+        setSettings({
+          exchangeRate: (exchangeRateData?.value as any)?.value || 17000,
+          markupTiers: (markupTiersData?.value as any) || settings.markupTiers
+        });
+      }
+    } catch (error) {
+      console.error('Error loading settings:', error);
+    }
+  };
 
   const loadDashboardData = async () => {
     try {
@@ -102,6 +132,44 @@ const Admin = () => {
       toast({
         title: "Error",
         description: "Failed to sync packages",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveSettings = async () => {
+    try {
+      setLoading(true);
+      
+      const updates = [
+        {
+          key: 'exchange_rate_usd_to_idr',
+          value: { value: settings.exchangeRate }
+        },
+        {
+          key: 'markup_tiers',
+          value: settings.markupTiers
+        }
+      ];
+
+      for (const update of updates) {
+        await supabase
+          .from('app_settings')
+          .upsert(update, { onConflict: 'key' });
+      }
+
+      toast({
+        title: "Success",
+        description: "Settings saved successfully",
+      });
+
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save settings",
         variant: "destructive"
       });
     } finally {
@@ -296,43 +364,68 @@ const Admin = () => {
           <TabsContent value="settings" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>System Settings</CardTitle>
-                <CardDescription>Configure system-wide settings</CardDescription>
+                <CardTitle>Pricing Settings</CardTitle>
+                <CardDescription>Configure exchange rate and markup tiers</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div>
-                  <Label htmlFor="markup">Markup Percentage</Label>
-                  <Input id="markup" placeholder="10" />
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Additional markup percentage on eSIM packages
-                  </p>
+                  <Label htmlFor="exchange-rate">Exchange Rate (USD to IDR)</Label>
+                  <Input 
+                    id="exchange-rate" 
+                    type="number"
+                    value={settings.exchangeRate}
+                    onChange={(e) => setSettings({...settings, exchangeRate: Number(e.target.value)})}
+                  />
                 </div>
 
-                <div>
-                  <Label htmlFor="api-url">eSIM Access API URL</Label>
-                  <Input id="api-url" value="https://api.esimaccess.com" readOnly />
-                </div>
-
-                <Button>Save Settings</Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>API Status</CardTitle>
-                <CardDescription>Check connectivity to external services</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span>eSIM Access API</span>
-                    <Badge variant="default">Connected</Badge>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label>Tier 1 (0-50 USD) - Markup %</Label>
+                    <Input 
+                      type="number"
+                      value={settings.markupTiers.tier1.markup_percentage}
+                      onChange={(e) => setSettings({
+                        ...settings, 
+                        markupTiers: {
+                          ...settings.markupTiers,
+                          tier1: {...settings.markupTiers.tier1, markup_percentage: Number(e.target.value)}
+                        }
+                      })}
+                    />
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span>Supabase Database</span>
-                    <Badge variant="default">Connected</Badge>
+                  <div>
+                    <Label>Tier 2 (50-100 USD) - Markup %</Label>
+                    <Input 
+                      type="number"
+                      value={settings.markupTiers.tier2.markup_percentage}
+                      onChange={(e) => setSettings({
+                        ...settings, 
+                        markupTiers: {
+                          ...settings.markupTiers,
+                          tier2: {...settings.markupTiers.tier2, markup_percentage: Number(e.target.value)}
+                        }
+                      })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Tier 3 (100+ USD) - Markup %</Label>
+                    <Input 
+                      type="number"
+                      value={settings.markupTiers.tier3.markup_percentage}
+                      onChange={(e) => setSettings({
+                        ...settings, 
+                        markupTiers: {
+                          ...settings.markupTiers,
+                          tier3: {...settings.markupTiers.tier3, markup_percentage: Number(e.target.value)}
+                        }
+                      })}
+                    />
                   </div>
                 </div>
+
+                <Button onClick={saveSettings} disabled={loading}>
+                  Save Settings
+                </Button>
               </CardContent>
             </Card>
           </TabsContent>

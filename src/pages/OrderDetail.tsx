@@ -111,6 +111,40 @@ const OrderDetail = () => {
     }
   };
 
+  const handleTopup = async (packageCode: string) => {
+    if (!order || !order.esims[0]) return;
+    
+    try {
+      setLoading(true);
+      
+      const { data, error } = await supabase.functions.invoke('manage-esim', {
+        body: {
+          action: 'topup',
+          iccid: order.esims[0].iccid,
+          packageCode: packageCode
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Top-up completed successfully",
+      });
+
+      loadOrderDetails();
+    } catch (error) {
+      console.error('Error processing topup:', error);
+      toast({
+        title: "Error",
+        description: "Failed to process top-up",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     toast({

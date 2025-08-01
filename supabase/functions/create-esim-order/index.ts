@@ -36,10 +36,10 @@ serve(async (req) => {
       }
     }
 
-    const { packageId, customerEmail, customerPhone } = await req.json();
+    const { packageId, customerEmail, customerPhone, orderType = 'NEW', parentOrderId } = await req.json();
 
-    if (!packageId || !customerEmail) {
-      throw new Error("Package ID and customer email are required");
+    if (!packageId || !customerEmail || !orderType) {
+      throw new Error("Package ID, customer email, and order type are required");
     }
 
     // Connect to Supabase with service role
@@ -105,7 +105,9 @@ serve(async (req) => {
         customer_phone: customerPhone,
         status: 'pending',
         total_amount: packageData.price_usd,
-        payment_id: esimData.obj.orderNo
+        payment_id: esimData.obj.orderNo,
+        order_type: orderType,
+        parent_order_id: parentOrderId || null
       })
       .select()
       .single();

@@ -51,8 +51,37 @@ serve(async (req) => {
 
     console.log(`Processing ${data.obj.packageList.length} packages...`);
 
+    // Get settings for exchange rate and markup tiers
+    const { data: settings } = await supabaseService
+      .from('app_settings')
+      .select('key, value')
+      .in('key', ['exchange_rate_usd_to_idr', 'markup_tiers']);
+
+    const exchangeRate = settings?.find(s => s.key === 'exchange_rate_usd_to_idr')?.value?.value || 17000;
+    const markupTiers = settings?.find(s => s.key === 'markup_tiers')?.value || {
+      tier1: { min_price: 0, max_price: 50, markup_percentage: 20 },
+      tier2: { min_price: 50, max_price: 100, markup_percentage: 15 },
+      tier3: { min_price: 100, max_price: 999999, markup_percentage: 10 }
+    };
+
     // Process packages and insert/update them in the database
     for (const pkg of data.obj.packageList) {
+      // Calculate price with markup
+      const basePrice = pkg.price / 10000; // Convert from cents to USD
+      const priceInIDR = basePrice * exchangeRate;
+      
+      // Determine markup tier
+      let markupPercentage = 10; // default
+      if (priceInIDR <= markupTiers.tier1.max_price) {
+        markupPercentage = markupTiers.tier1.markup_percentage;
+      } else if (priceInIDR <= markupTiers.tier2.max_price) {
+        markupPercentage = markupTiers.tier2.markup_percentage;
+      } else {
+        markupPercentage = markupTiers.tier3.markup_percentage;
+      }
+      
+      const finalPrice = priceInIDR * (1 + markupPercentage / 100);
+
       const packageData = {
         package_id: pkg.packageCode,
         name: pkg.name,
@@ -61,7 +90,7 @@ serve(async (req) => {
         region: pkg.location.includes(',') ? pkg.location : null,
         data_amount_mb: Math.round(pkg.volume / (1024 * 1024)), // Convert bytes to MB
         validity_days: pkg.duration,
-        price_usd: pkg.price / 10000, // Convert from cents to dollars
+        price_usd: finalPrice / exchangeRate, // Store in USD equivalent for consistency
         package_type: pkg.dataType === 1 ? 'data' : 'combo',
         is_active: true,
       };
