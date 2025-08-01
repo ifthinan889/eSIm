@@ -14,7 +14,250 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      admin_users: {
+        Row: {
+          created_at: string
+          id: string
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      app_settings: {
+        Row: {
+          created_at: string
+          id: string
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key: string
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
+      esim_packages: {
+        Row: {
+          country_code: string
+          created_at: string
+          data_amount_mb: number | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          package_id: string
+          package_type: Database["public"]["Enums"]["package_type"] | null
+          price_usd: number
+          region: string | null
+          updated_at: string
+          validity_days: number
+        }
+        Insert: {
+          country_code: string
+          created_at?: string
+          data_amount_mb?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          package_id: string
+          package_type?: Database["public"]["Enums"]["package_type"] | null
+          price_usd: number
+          region?: string | null
+          updated_at?: string
+          validity_days: number
+        }
+        Update: {
+          country_code?: string
+          created_at?: string
+          data_amount_mb?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          package_id?: string
+          package_type?: Database["public"]["Enums"]["package_type"] | null
+          price_usd?: number
+          region?: string | null
+          updated_at?: string
+          validity_days?: number
+        }
+        Relationships: []
+      }
+      esims: {
+        Row: {
+          activated_at: string | null
+          activation_code: string | null
+          created_at: string
+          data_used_mb: number | null
+          esim_token: string
+          expires_at: string | null
+          iccid: string
+          id: string
+          order_id: string
+          qr_code_url: string | null
+          status: Database["public"]["Enums"]["esim_status"] | null
+          updated_at: string
+        }
+        Insert: {
+          activated_at?: string | null
+          activation_code?: string | null
+          created_at?: string
+          data_used_mb?: number | null
+          esim_token: string
+          expires_at?: string | null
+          iccid: string
+          id?: string
+          order_id: string
+          qr_code_url?: string | null
+          status?: Database["public"]["Enums"]["esim_status"] | null
+          updated_at?: string
+        }
+        Update: {
+          activated_at?: string | null
+          activation_code?: string | null
+          created_at?: string
+          data_used_mb?: number | null
+          esim_token?: string
+          expires_at?: string | null
+          iccid?: string
+          id?: string
+          order_id?: string
+          qr_code_url?: string | null
+          status?: Database["public"]["Enums"]["esim_status"] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "esims_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string
+          customer_email: string
+          customer_phone: string | null
+          id: string
+          markup_amount: number | null
+          order_reference: string
+          package_id: string
+          payment_id: string | null
+          status: Database["public"]["Enums"]["order_status"] | null
+          total_amount: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_email: string
+          customer_phone?: string | null
+          id?: string
+          markup_amount?: number | null
+          order_reference: string
+          package_id: string
+          payment_id?: string | null
+          status?: Database["public"]["Enums"]["order_status"] | null
+          total_amount: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_email?: string
+          customer_phone?: string | null
+          id?: string
+          markup_amount?: number | null
+          order_reference?: string
+          package_id?: string
+          payment_id?: string | null
+          status?: Database["public"]["Enums"]["order_status"] | null
+          total_amount?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "esim_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      topups: {
+        Row: {
+          amount: number
+          created_at: string
+          esim_id: string
+          id: string
+          package_id: string
+          payment_id: string | null
+          status: Database["public"]["Enums"]["order_status"] | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          esim_id: string
+          id?: string
+          package_id: string
+          payment_id?: string | null
+          status?: Database["public"]["Enums"]["order_status"] | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          esim_id?: string
+          id?: string
+          package_id?: string
+          payment_id?: string | null
+          status?: Database["public"]["Enums"]["order_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "topups_esim_id_fkey"
+            columns: ["esim_id"]
+            isOneToOne: false
+            referencedRelation: "esims"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "topups_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "esim_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +266,9 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      esim_status: "active" | "suspended" | "cancelled" | "revoked"
+      order_status: "pending" | "completed" | "failed" | "cancelled"
+      package_type: "data" | "voice" | "sms" | "combo"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +395,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      esim_status: ["active", "suspended", "cancelled", "revoked"],
+      order_status: ["pending", "completed", "failed", "cancelled"],
+      package_type: ["data", "voice", "sms", "combo"],
+    },
   },
 } as const
