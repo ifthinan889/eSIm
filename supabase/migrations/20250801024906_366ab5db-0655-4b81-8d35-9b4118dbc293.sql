@@ -12,7 +12,7 @@ BEGIN
         WHERE auth.users.id = admin_users.user_id 
         AND auth.users.email = 'admin@esimnexus.com'
     );
-    
+  
     -- Only create if doesn't exist
     IF admin_user_id IS NULL THEN
         -- Insert into auth.users table (this is a simplified approach)
