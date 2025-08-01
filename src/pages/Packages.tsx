@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Globe, Smartphone, Clock, DollarSign } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import Navbar from '@/components/layout/Navbar';
+import PurchaseDialog from '@/components/purchase/PurchaseDialog';
 
 interface ESIMPackage {
   id: string;
@@ -25,7 +26,8 @@ interface ESIMPackage {
 const Packages = () => {
   const [packages, setPackages] = useState<ESIMPackage[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const [selectedPackage, setSelectedPackage] = useState<ESIMPackage | null>(null);
+  const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -55,37 +57,13 @@ const Packages = () => {
     }
   };
 
-  const handlePurchase = async (packageId: string) => {
-    if (!user) {
-      navigate('/auth');
-      return;
-    }
+  const handlePurchase = (pkg: ESIMPackage) => {
+    setSelectedPackage(pkg);
+    setShowPurchaseDialog(true);
+  };
 
-    try {
-      const { data, error } = await supabase.functions.invoke('create-esim-order', {
-        body: {
-          packageId: packageId,
-          customerEmail: user.email,
-          customerPhone: null
-        }
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Order Created",
-        description: `Order ${data.order.orderReference} has been created successfully!`,
-      });
-
-      navigate(`/orders/${data.order.id}`);
-    } catch (error) {
-      console.error('Error creating order:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create order. Please try again.",
-        variant: "destructive"
-      });
-    }
+  const handlePurchaseSuccess = (orderId: string) => {
+    navigate(`/orders/${orderId}`);
   };
 
   const formatDataAmount = (mb: number) => {
@@ -122,7 +100,9 @@ const Packages = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">eSIM Packages</h1>
         <p className="text-muted-foreground">Choose the perfect package for your travel needs</p>
@@ -174,9 +154,9 @@ const Packages = () => {
                   
                   <Button 
                     className="w-full" 
-                    onClick={() => handlePurchase(pkg.id)}
+                    onClick={() => handlePurchase(pkg)}
                   >
-                    {user ? 'Purchase Now' : 'Sign In to Purchase'}
+                    Purchase Now
                   </Button>
                 </div>
               </CardContent>
@@ -184,6 +164,18 @@ const Packages = () => {
           ))}
         </div>
       )}
+
+      {selectedPackage && (
+        <PurchaseDialog
+          isOpen={showPurchaseDialog}
+          onClose={() => setShowPurchaseDialog(false)}
+          packageId={selectedPackage.id}
+          packageName={selectedPackage.name}
+          packagePrice={selectedPackage.price_usd}
+          onSuccess={handlePurchaseSuccess}
+        />
+      )}
+      </div>
     </div>
   );
 };

@@ -1,13 +1,7 @@
-import Dashboard from './Dashboard';
-import Navbar from '@/components/layout/Navbar';
+import Packages from './Packages';
 
 const Index = () => {
-  return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <Dashboard />
-    </div>
-  );
+  return <Packages />;
 };
 
 export default Index;

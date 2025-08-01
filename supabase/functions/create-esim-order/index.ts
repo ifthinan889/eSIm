@@ -17,19 +17,23 @@ serve(async (req) => {
       throw new Error("eSIM Access API key not configured");
     }
 
-    // Get authenticated user
-    const authHeader = req.headers.get("Authorization")!;
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-    );
+    // Get authenticated user (optional for anonymous purchases)
+    const authHeader = req.headers.get("Authorization");
+    let user = null;
+    
+    if (authHeader) {
+      const supabaseClient = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+      );
 
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(
-      authHeader.replace("Bearer ", "")
-    );
+      const { data: { user: authUser }, error: authError } = await supabaseClient.auth.getUser(
+        authHeader.replace("Bearer ", "")
+      );
 
-    if (authError || !user) {
-      throw new Error("Unauthorized");
+      if (!authError && authUser) {
+        user = authUser;
+      }
     }
 
     const { packageId, customerEmail, customerPhone } = await req.json();
@@ -94,7 +98,7 @@ serve(async (req) => {
     const { data: order, error: orderError } = await supabaseService
       .from('orders')
       .insert({
-        user_id: user.id,
+        user_id: user?.id || null,
         package_id: packageId,
         order_reference: orderReference,
         customer_email: customerEmail,

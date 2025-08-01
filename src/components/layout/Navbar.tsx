@@ -23,11 +23,12 @@ const Navbar = () => {
         </Link>
 
         <div className="flex items-center space-x-4">
+          <Link to="/packages">
+            <Button variant="ghost">Packages</Button>
+          </Link>
+          
           {user ? (
             <>
-              <Link to="/packages">
-                <Button variant="ghost">Packages</Button>
-              </Link>
               <Link to="/orders">
                 <Button variant="ghost">My Orders</Button>
               </Link>
@@ -63,7 +64,7 @@ const Navbar = () => {
             </>
           ) : (
             <Link to="/auth">
-              <Button>Sign In</Button>
+              <Button>Admin Login</Button>
             </Link>
           )}
         </div>
