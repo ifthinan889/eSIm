@@ -1,1 +1,13 @@
 project_id = "asxzncvrwtjqtjoedisw"
+
+[functions.sync-packages]
+verify_jwt = false
+
+[functions.create-esim-order]
+verify_jwt = true
+
+[functions.query-esim]
+verify_jwt = true
+
+[functions.manage-esim]
+verify_jwt = true
