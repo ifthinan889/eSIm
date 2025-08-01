@@ -168,7 +168,9 @@ export type Database = {
           id: string
           markup_amount: number | null
           order_reference: string
+          order_type: string | null
           package_id: string
+          parent_order_id: string | null
           payment_id: string | null
           status: Database["public"]["Enums"]["order_status"] | null
           total_amount: number
@@ -182,7 +184,9 @@ export type Database = {
           id?: string
           markup_amount?: number | null
           order_reference: string
+          order_type?: string | null
           package_id: string
+          parent_order_id?: string | null
           payment_id?: string | null
           status?: Database["public"]["Enums"]["order_status"] | null
           total_amount: number
@@ -196,7 +200,9 @@ export type Database = {
           id?: string
           markup_amount?: number | null
           order_reference?: string
+          order_type?: string | null
           package_id?: string
+          parent_order_id?: string | null
           payment_id?: string | null
           status?: Database["public"]["Enums"]["order_status"] | null
           total_amount?: number
@@ -211,49 +217,11 @@ export type Database = {
             referencedRelation: "esim_packages"
             referencedColumns: ["id"]
           },
-        ]
-      }
-      topups: {
-        Row: {
-          amount: number
-          created_at: string
-          esim_id: string
-          id: string
-          package_id: string
-          payment_id: string | null
-          status: Database["public"]["Enums"]["order_status"] | null
-        }
-        Insert: {
-          amount: number
-          created_at?: string
-          esim_id: string
-          id?: string
-          package_id: string
-          payment_id?: string | null
-          status?: Database["public"]["Enums"]["order_status"] | null
-        }
-        Update: {
-          amount?: number
-          created_at?: string
-          esim_id?: string
-          id?: string
-          package_id?: string
-          payment_id?: string | null
-          status?: Database["public"]["Enums"]["order_status"] | null
-        }
-        Relationships: [
           {
-            foreignKeyName: "topups_esim_id_fkey"
-            columns: ["esim_id"]
+            foreignKeyName: "orders_parent_order_id_fkey"
+            columns: ["parent_order_id"]
             isOneToOne: false
-            referencedRelation: "esims"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "topups_package_id_fkey"
-            columns: ["package_id"]
-            isOneToOne: false
-            referencedRelation: "esim_packages"
+            referencedRelation: "orders"
             referencedColumns: ["id"]
           },
         ]
@@ -263,7 +231,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_demo_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       esim_status: "active" | "suspended" | "cancelled" | "revoked"
